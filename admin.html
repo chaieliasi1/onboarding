@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#191920">
+<title>ניהול לקוחות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+  .login{margin-top:12vh}
+  .result{background:var(--emerald-wash)}
+  .linkbox{direction:ltr;text-align:left;font-size:.82rem;word-break:break-all;background:#fff;border-radius:10px;padding:.6rem .8rem;color:var(--ink-dim);margin-block:.6rem}
+  .actions{display:flex;gap:.5rem;flex-wrap:wrap}
+  .wa{background:#25D366;color:#053B1C}
+  .wa:hover{background:#1FBF5A}
+  .client{display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem}
+  .client b{display:block;font-size:1.04rem}
+  .client small{color:var(--ink-dim);font-size:.84rem}
+  .client .side{display:flex;flex-direction:column;align-items:flex-end;gap:.45rem;flex:none}
+  .badge{font-size:.78rem;font-weight:700;padding:.2rem .65rem;border-radius:999px;white-space:nowrap}
+  .badge.sent{background:var(--card-2);color:var(--ink-dim)}
+  .badge.signed{background:var(--brand-soft);color:var(--brand-deep)}
+  .badge.done{background:var(--emerald-wash);color:var(--emerald-deep)}
+  .client .links{display:flex;gap:.8rem;font-size:.86rem;margin-top:.35rem;flex-wrap:wrap}
+  .empty{color:var(--ink-dim);text-align:center}
+  .toprow{display:flex;justify-content:space-between;align-items:baseline}
+</style>
+</head>
+<body>
+<div class="blobs" aria-hidden="true"><i></i><i></i></div>
+
+<div class="page">
+  <header class="mast"><b>חי אליאסי</b><span>ניהול לקוחות</span></header>
+  <p class="demo" id="demo" hidden>מצב הדגמה: שום דבר לא נשלח ולא נשמר בגוגל. הסיסמה בהדגמה: 1234</p>
+
+  <!-- login -->
+  <section id="login" class="login" hidden>
+    <form class="card" id="loginForm" novalidate>
+      <div class="row">
+        <label for="pw">סיסמת ניהול</label>
+        <input class="field" id="pw" type="password" autocomplete="current-password" required>
+        <p class="err" id="loginErr" role="alert"></p>
+        <button class="go" type="submit">כניסה</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- app -->
+  <main id="app" hidden>
+    <div class="toprow">
+      <h2 class="grp">לקוח חדש</h2>
+      <button class="link-btn" id="logout" type="button">יציאה</button>
+    </div>
+    <form class="card" id="newForm" novalidate>
+      <div class="row">
+        <label for="name">שם הלקוח</label>
+        <input class="field" id="name" autocomplete="off" maxlength="80" placeholder="למשל: נועה ואיתי כהן" required>
+      </div>
+      <div class="row">
+        <label for="amount">הסכום שסגרנו</label>
+        <div class="money"><input class="field" id="amount" inputmode="numeric" autocomplete="off" placeholder="0" required></div>
+        <p class="err" id="newErr" role="alert"></p>
+        <button class="go" type="submit" id="createBtn">צור קישור</button>
+      </div>
+    </form>
+
+    <div class="card result" id="result" hidden>
+      <div class="row">
+        <b>הקישור של <span id="rName"></span> מוכן</b>
+        <div class="linkbox" id="rLink"></div>
+        <div class="actions">
+          <button class="ghost wa" id="rWa" type="button">שליחה בוואטסאפ</button>
+          <button class="ghost" id="rCopy" type="button">העתקה</button>
+          <button class="ghost" id="rShare" type="button" hidden>שיתוף</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toprow">
+      <h2 class="grp">לקוחות</h2>
+      <button class="link-btn" id="refresh" type="button">רענון</button>
+    </div>
+    <div class="card" id="list"><div class="row empty">טוען…</div></div>
+  </main>
+
+  <footer>רק לשימוש של חי. הקישורים ללקוחות נפתחים בלי סיסמה.</footer>
+</div>
+
+<script src="api.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const STATUS = { sent: 'נשלח', signed: 'חתם, לא סיים שאלון', done: 'סיים' };
+  let password = '';
+
+  const store = {
+    get() { try { return localStorage.getItem('onb-admin') || ''; } catch (e) { return ''; } },
+    set(v) { try { v ? localStorage.setItem('onb-admin', v) : localStorage.removeItem('onb-admin'); } catch (e) {} }
+  };
+
+  const clientUrl = token => new URL('c.html?t=' + token + (Api.MOCK && window.ONBOARDING_API ? '&mock' : ''), location.href).href;
+  const waText = (name, url) => 'היי ' + name + ', כאן חי 🙂\nלפני שיוצאים לדרך, הנה ההסכמות לחתימה ושאלון קצר לפני הפגישה הראשונה:\n' + url;
+
+  async function copy(text, btn) {
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {
+      const t = document.createElement('textarea');
+      t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove();
+    }
+    const old = btn.textContent;
+    btn.textContent = 'הועתק ✓';
+    setTimeout(() => { btn.textContent = old; }, 1600);
+  }
+
+  function show(loggedIn) {
+    $('login').hidden = loggedIn;
+    $('app').hidden = !loggedIn;
+    if (!loggedIn) setTimeout(() => $('pw').focus(), 50);
+  }
+
+  async function load() {
+    const res = await Api.call('list', { password });
+    render(res.clients);
+  }
+
+  function render(clients) {
+    const box = $('list');
+    box.textContent = '';
+    if (!clients.length) {
+      box.innerHTML = '<div class="row empty">עוד אין לקוחות. יוצרים קישור ראשון למעלה.</div>';
+      return;
+    }
+    clients.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'row client';
+
+      const info = document.createElement('div');
+      const b = document.createElement('b'); b.textContent = c.name;
+      const s = document.createElement('small');
+      s.textContent = Api.money(c.amount) + ' · ' + new Date(c.created).toLocaleDateString('he-IL');
+      info.append(b, s);
+      const links = document.createElement('div'); links.className = 'links';
+      [['חוזה חתום', c.contractUrl], ['שאלון', c.questionnaireUrl]].forEach(([t, href]) => {
+        if (!href) return;
+        const a = document.createElement('a'); a.textContent = t; a.href = href; a.target = '_blank'; a.rel = 'noopener';
+        links.append(a);
+      });
+      if (links.childNodes.length) info.append(links);
+
+      const side = document.createElement('div'); side.className = 'side';
+      const badge = document.createElement('span');
+      badge.className = 'badge ' + c.status; badge.textContent = STATUS[c.status] || c.status;
+      side.append(badge);
+      if (c.token) {
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'ghost'; btn.textContent = 'העתקת קישור';
+        btn.onclick = () => copy(clientUrl(c.token), btn);
+        side.append(btn);
+      }
+      row.append(info, side);
+      box.append(row);
+    });
+  }
+
+  $('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = e.submitter || $('loginForm').querySelector('button');
+    password = $('pw').value;
+    $('loginErr').textContent = '';
+    btn.disabled = true;
+    try {
+      const res = await Api.call('list', { password });
+      store.set(password);
+      show(true);
+      render(res.clients);
+    } catch (err) {
+      $('loginErr').textContent = Api.errText(err.code);
+    } finally { btn.disabled = false; }
+  });
+
+  $('amount').addEventListener('input', e => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 7);
+    e.target.value = digits ? Number(digits).toLocaleString('he-IL') : '';
+  });
+
+  $('newForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = $('name').value.trim();
+    const amount = Number($('amount').value.replace(/\D/g, ''));
+    $('name').setAttribute('aria-invalid', !name);
+    $('amount').setAttribute('aria-invalid', !(amount > 0));
+    $('newErr').textContent = '';
+    if (!name || !(amount > 0)) { $('newErr').textContent = 'צריך שם וסכום.'; return; }
+
+    const btn = $('createBtn');
+    btn.disabled = true; btn.textContent = 'יוצר…';
+    try {
+      const { token } = await Api.call('create', { password, name, amount });
+      const url = clientUrl(token);
+      $('rName').textContent = name;
+      $('rLink').textContent = url;
+      $('rCopy').onclick = () => copy(url, $('rCopy'));
+      $('rWa').onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent(waText(name, url)), '_blank');
+      if (navigator.share) {
+        $('rShare').hidden = false;
+        $('rShare').onclick = () => navigator.share({ text: waText(name, url) }).catch(() => {});
+      }
+      $('result').hidden = false;
+      $('newForm').reset();
+      $('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      load().catch(() => {});
+    } catch (err) {
+      $('newErr').textContent = Api.errText(err.code);
+      if (err.code === 'auth') { store.set(''); show(false); }
+    } finally {
+      btn.disabled = false; btn.textContent = 'צור קישור';
+    }
+  });
+
+  $('refresh').onclick = () => load().catch(err => { $('list').innerHTML = ''; const r = document.createElement('div'); r.className = 'row err'; r.textContent = Api.errText(err.code); $('list').append(r); });
+  $('logout').onclick = () => { store.set(''); password = ''; $('pw').value = ''; show(false); };
+
+  $('demo').hidden = !Api.MOCK;
+  password = store.get();
+  if (!password) { show(false); return; }
+  show(true);
+  load().catch(err => {
+    if (err.code === 'auth' || err.code === 'locked') { store.set(''); show(false); $('loginErr').textContent = Api.errText(err.code); }
+    else $('refresh').click();
+  });
+})();
+</script>
+</body>
+</html>

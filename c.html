@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#191920">
+<title>לפני שיוצאים לדרך</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+  .card-title{margin:0 0 .2rem;font-size:1.2rem;font-weight:700}
+  .privacy ul{margin:.3rem 0 0;padding-inline-start:1.2rem}
+  .privacy li{margin-block:.4rem;line-height:1.6;font-size:.95rem}
+  .privacy li::marker{color:var(--brand)}
+  .sec-note{font-size:.86rem;color:var(--on-bg-dim);margin:-.3rem 0 .8rem}
+  .intro{color:var(--on-bg-dim);font-size:.95rem;margin-top:.6rem}
+  .saved{font-size:.8rem;color:var(--on-bg-dim);text-align:center;margin-top:.6rem;min-height:1.2em}
+</style>
+</head>
+<body>
+<div class="blobs" aria-hidden="true"><i></i><i></i></div>
+
+<div class="page">
+  <header class="mast"><b>חי אליאסי</b><span>יועץ פיננסי לזוגות צעירים ולמשפחות</span></header>
+  <p class="demo" id="demo" hidden>מצב הדגמה: שום דבר לא נשלח.</p>
+
+  <div id="loading" class="spinner" role="status" aria-label="טוען"></div>
+  <p class="page-err" id="fatal" role="alert"></p>
+
+  <!-- step 1: contract -->
+  <main id="s1" hidden>
+    <section class="hero">
+      <h1>היי <span data-name></span>, שמח שאנחנו יוצאים לדרך</h1>
+      <p>לפני שמתחילים, כמה הסכמות קצרות. קוראים, ממלאים מייל וטלפון, וחותמים. אחר כך עוברים לשאלון קצר לפני הפגישה הראשונה.</p>
+      <div class="steps" aria-hidden="true"><i class="on"></i><i></i></div>
+    </section>
+
+    <article class="card contract">
+      <div class="row">
+        <h2 class="card-title" id="cTitle"></h2>
+      </div>
+      <div class="row">
+        <dl class="facts">
+          <dt>שם</dt><dd data-name></dd>
+          <dt>התמורה עבור תהליך הליווי</dt><dd id="cAmount"></dd>
+        </dl>
+      </div>
+      <div class="row"><ol id="cClauses"></ol></div>
+    </article>
+
+    <form class="card" id="signForm" novalidate style="margin-top:1rem">
+      <div class="row">
+        <label for="email">מייל</label>
+        <span class="hint">לכאן יישלח העתק של ההסכם החתום</span>
+        <input class="field" id="email" type="email" dir="ltr" autocomplete="email" inputmode="email" maxlength="120" required>
+      </div>
+      <div class="row">
+        <label for="phone">טלפון</label>
+        <input class="field" id="phone" type="tel" dir="ltr" autocomplete="tel" inputmode="tel" maxlength="30" required>
+      </div>
+      <div class="row">
+        <label class="agree"><input type="checkbox" id="agree"><span id="cAgree"></span></label>
+      </div>
+      <div class="row">
+        <span class="q" id="sigLabel">חתימה</span>
+        <div class="sig-wrap" id="sigWrap" role="img" aria-labelledby="sigLabel">
+          <canvas id="sig"></canvas>
+          <span class="ph">חותמים כאן עם האצבע או העכבר</span>
+        </div>
+        <div class="sig-bar"><span id="today"></span><button class="ghost" type="button" id="sigClear">ניקוי</button></div>
+        <p class="err" id="signErr" role="alert"></p>
+        <button class="go" type="submit" id="signBtn">חתימה והמשך לשאלון</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- step 2: questionnaire -->
+  <main id="s2" hidden>
+    <section class="hero">
+      <h1>שאלון אפיון לפני פגישה ראשונה</h1>
+      <p class="intro">ממלאים את מה שידוע לכם לפני הפגישה. אפשר לרשום הערכות ולציין מה צריך לברר. מטרת השאלון היא להבין את הצרכים שלכם ולהכין את הפגישה; אין צורך להעביר סיסמאות או פרטי זיהוי מלאים של חשבונות.</p>
+      <div class="steps" aria-hidden="true"><i class="on"></i><i class="on"></i></div>
+    </section>
+
+    <form id="qForm" novalidate>
+      <div id="qBody"></div>
+
+      <h2 class="grp" id="pTitle"></h2>
+      <div class="card privacy">
+        <div class="row"><ul id="pPoints"></ul></div>
+        <div class="row">
+          <label class="agree"><input type="checkbox" id="consent"><span id="pAgree"></span></label>
+          <p class="err" id="qErr" role="alert"></p>
+          <button class="go" type="submit" id="qBtn">שליחה</button>
+        </div>
+      </div>
+      <p class="saved" id="saved"></p>
+    </form>
+  </main>
+
+  <!-- step 3: thanks -->
+  <main id="s3" hidden>
+    <section class="hero center">
+      <div class="big-emoji" aria-hidden="true">🤝</div>
+      <h1 id="doneTitle">תודה!</h1>
+      <p id="doneText"></p>
+    </section>
+  </main>
+
+  <footer>חי אליאסי | יועץ פיננסי לזוגות צעירים ולמשפחות</footer>
+</div>
+
+<script src="api.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const token = new URLSearchParams(location.search).get('t') || '';
+  let data = null;
+
+  /* ---------- questionnaire (wording from שאלון_אפיון_לפגישה_ראשונה_חי_אליאסי.docx) ---------- */
+  const Q = [
+    { title: 'מי משתתף בתהליך', items: [
+      { id: 'names', q: 'שם או שמות בני המשפחה המשתתפים', type: 'line', prefill: () => data.name },
+      { id: 'contact', q: 'טלפון ודואר אלקטרוני ליצירת קשר', type: 'line', prefill: () => [data.phone, data.email].filter(Boolean).join(' | ') },
+      { id: 'household', q: 'מספר נפשות במשק הבית וגילי הילדים אם רלוונטי', type: 'line' }
+    ]},
+    { title: 'למה פניתם דווקא עכשיו', items: [
+      { id: 'worry', q: 'מה הכי מעסיק אתכם בהתנהלות עם כסף כיום', type: 'text' },
+      { id: 'hope', q: 'מה תרצו שיקרה במהלך ארבעת חודשי הליווי', type: 'text' },
+      { id: 'control', q: 'עד כמה אתם מרגישים בשליטה על הכסף?', type: 'scale', ends: ['1 בכלל לא', '5 בשליטה רבה'] },
+      { id: 'tried', q: 'מה כבר ניסיתם לעשות כדי לשפר את המצב?', type: 'text' }
+    ]},
+    { title: 'הכנסות ותזרים', items: [
+      { id: 'income', q: 'הכנסה חודשית נטו משוערת של משק הבית', type: 'money' },
+      { id: 'steady', q: 'האם ההכנסה קבועה?', type: 'radio', options: ['כן', 'לא'] },
+      { id: 'extra', q: 'מקורות הכנסה נוספים או הכנסות שאינן קבועות', type: 'text' },
+      { id: 'dates', q: 'באילו תאריכים נכנסות ההכנסות העיקריות', type: 'line' },
+      { id: 'monthEnd', q: 'בסוף חודש רגיל אתם בדרך כלל:', type: 'radio', options: ['בפלוס', 'מאוזנים', 'במינוס', 'לא יודעים'] },
+      { id: 'hardMonth', q: 'אם יש חודש שבו התזרים קשה במיוחד, מתי ולמה', type: 'text' }
+    ]},
+    { title: 'הוצאות והתחייבויות', items: [
+      { id: 'top3', q: 'שלוש קטגוריות שבהן לדעתכם יוצא הכי הרבה כסף', type: 'trio' },
+      { id: 'seasonal', q: 'האם יש הוצאות עונתיות או שנתיות משמעותיות בקרוב?', type: 'radioText', options: ['לא', 'כן'], follow: 'כן', placeholder: 'אילו?' },
+      { id: 'debts', q: 'התחייבויות קיימות', type: 'checks', options: ['משכנתא', 'הלוואות', 'תשלומים בכרטיס', 'אשראי מתגלגל', 'חוב אחר', 'אין'], none: 'אין' },
+      { id: 'repay', q: 'סך החזר חודשי משוער על הלוואות ומשכנתא, אם ידוע', type: 'money' },
+      { id: 'urgent', q: 'האם יש תשלום דחוף שכדאי שאכיר בהתחלה', type: 'text' }
+    ]},
+    { title: 'הרגלים והתנהלות משותפת', items: [
+      { id: 'budget', q: 'האם יש תקציב או מעקב הוצאות כיום?', type: 'radio', options: ['כן, קבוע', 'מדי פעם', 'עדיין לא'] },
+      { id: 'who', q: 'מי בדרך כלל עוקב אחר החשבונות ומקבל החלטות?', type: 'line' },
+      { id: 'keep', q: 'איזו הוצאה או פעילות חשוב לכם במיוחד לשמר גם במהלך התהליך', type: 'text' },
+      { id: 'time', q: 'כמה זמן תוכלו להקדיש למעקב ולהחלטות מדי שבוע?', type: 'radio', options: ['עד 15 דקות', 'כחצי שעה', 'יותר'] }
+    ]},
+    { title: 'יעדים ומשאבים', items: [
+      { id: 'goals', q: 'עד שני יעדים שתרצו להתקדם אליהם בשנה הקרובה', type: 'text' },
+      { id: 'savings', q: 'האם קיימים חסכונות או כספים זמינים שתרצו להביא בחשבון בשיחה', type: 'text' },
+      { id: 'pension', q: 'האם יש מוצר פנסיוני או ביטוחי שתרצו להבין לגביו איזה מידע חסר לכם?', type: 'radioText', options: ['לא', 'כן'], follow: 'כן', placeholder: 'איזה?' }
+    ]}
+  ];
+
+  /* ---------- helpers ---------- */
+  function el(tag, attrs, text) {
+    const e = document.createElement(tag);
+    Object.entries(attrs || {}).forEach(([k, v]) => { if (v != null) e.setAttribute(k, v); });
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function step(n) {
+    ['loading', 's1', 's2', 's3'].forEach((id, i) => { $(id).hidden = i !== n; });
+    window.scrollTo(0, 0);
+  }
+  function fatal(msg) {
+    $('loading').hidden = true;
+    ['s1', 's2', 's3'].forEach(id => { $(id).hidden = true; });
+    $('fatal').textContent = msg;
+  }
+  function done(name) {
+    $('doneTitle').textContent = 'תודה' + (name ? ', ' + name : '') + '!';
+    $('doneText').textContent = data && data.email
+      ? 'הכל התקבל. העתק של ההסכם החתום בדרך למייל ' + data.email + '. נתראה בפגישה הראשונה.'
+      : 'הטופס כבר מולא והכל התקבל. נתראה בפגישה הראשונה.';
+    try { localStorage.removeItem('onb-draft-' + token); } catch (e) {}
+    step(3);
+  }
+
+  /* ---------- step 1: contract + signature ---------- */
+  function renderContract() {
+    document.querySelectorAll('[data-name]').forEach(n => { n.textContent = data.name; });
+    $('cTitle').textContent = data.contract.title;
+    $('cAmount').textContent = Api.money(data.amount);
+    data.contract.clauses.forEach(t => $('cClauses').append(el('li', null, t)));
+    $('cAgree').textContent = data.contract.agree;
+    $('email').value = data.email || '';
+    $('phone').value = data.phone || '';
+    $('today').textContent = 'תאריך: ' + new Date().toLocaleDateString('he-IL');
+    step(1);
+    pad.fit();
+  }
+
+  const pad = (function () {
+    const cv = $('sig'), wrap = $('sigWrap'), ctx = cv.getContext('2d');
+    let strokes = [], cur = null;
+    function fit() {
+      const r = cv.getBoundingClientRect();
+      if (!r.width) return;
+      const dpr = window.devicePixelRatio || 1;
+      cv.width = Math.round(r.width * dpr);
+      cv.height = Math.round(r.height * dpr);
+      draw(ctx, cv.width, cv.height, 2.4 * dpr);
+    }
+    function draw(c, w, h, lw) {
+      c.clearRect(0, 0, w, h);
+      c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#1B1D2A';
+      strokes.forEach(s => {
+        c.beginPath();
+        s.forEach((p, i) => { i ? c.lineTo(p[0] * w, p[1] * h) : c.moveTo(p[0] * w, p[1] * h); });
+        if (s.length === 1) c.lineTo(s[0][0] * w + .5, s[0][1] * h);
+        c.stroke();
+      });
+    }
+    function pt(e) {
+      const r = cv.getBoundingClientRect();
+      return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height];
+    }
+    cv.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      cv.setPointerCapture(e.pointerId);
+      cur = [pt(e)];
+      strokes.push(cur);
+      wrap.classList.add('inked');
+      wrap.removeAttribute('aria-invalid');
+      draw(ctx, cv.width, cv.height, 2.4 * (window.devicePixelRatio || 1));
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!cur) return;
+      e.preventDefault();
+      cur.push(pt(e));
+      draw(ctx, cv.width, cv.height, 2.4 * (window.devicePixelRatio || 1));
+    });
+    ['pointerup', 'pointercancel'].forEach(t => cv.addEventListener(t, () => { cur = null; }));
+    window.addEventListener('resize', fit);
+    return {
+      fit,
+      empty: () => !strokes.some(s => s.length > 2),
+      clear() { strokes = []; wrap.classList.remove('inked'); fit(); },
+      png() {
+        const r = cv.getBoundingClientRect();
+        const out = document.createElement('canvas');
+        out.width = 600; out.height = Math.round(600 * r.height / r.width);
+        draw(out.getContext('2d'), out.width, out.height, 4);
+        return out.toDataURL('image/png');
+      }
+    };
+  })();
+  $('sigClear').onclick = () => pad.clear();
+
+  $('signForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = $('email').value.trim();
+    const phone = $('phone').value.trim();
+    const bad = [];
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const okPhone = (phone.match(/\d/g) || []).length >= 9;
+    $('email').setAttribute('aria-invalid', !okEmail);
+    $('phone').setAttribute('aria-invalid', !okPhone);
+    if (!okEmail) bad.push('מייל תקין');
+    if (!okPhone) bad.push('טלפון');
+    if (!$('agree').checked) bad.push('סימון אישור ההסכמות');
+    if (pad.empty()) { bad.push('חתימה'); $('sigWrap').setAttribute('aria-invalid', 'true'); }
+    $('signErr').textContent = bad.length ? 'חסר: ' + bad.join(', ') + '.' : '';
+    if (bad.length) return;
+
+    const btn = $('signBtn');
+    btn.disabled = true; btn.textContent = 'שומר את החתימה…';
+    try {
+      await Api.call('sign', { token, email, phone, agree: true, signature: pad.png() });
+      data.email = email; data.phone = phone; data.status = 'signed';
+      renderQuestionnaire();
+    } catch (err) {
+      if (err.code === 'already_done') return done(data.name);
+      $('signErr').textContent = Api.errText(err.code);
+    } finally {
+      btn.disabled = false; btn.textContent = 'חתימה והמשך לשאלון';
+    }
+  });
+
+  /* ---------- step 2: questionnaire ---------- */
+  const draftKey = 'onb-draft-' + token;
+  function loadDraft() { try { return JSON.parse(localStorage.getItem(draftKey) || '{}'); } catch (e) { return {}; } }
+  let saveTimer;
+  function saveDraft() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      const f = $('qForm'), out = {};
+      Q.forEach(s => s.items.forEach(it => { out[it.id] = readRaw(f, it); }));
+      try { localStorage.setItem(draftKey, JSON.stringify(out)); $('saved').textContent = 'הטיוטה נשמרת במכשיר הזה'; } catch (e) {}
+    }, 400);
+  }
+
+  function field(it, draft) {
+    const v = draft[it.id];
+    const wrap = document.createDocumentFragment();
+    const txt = (tag, extra) => {
+      const f = el(tag, Object.assign({ class: 'field', name: it.id, id: 'f-' + it.id }, extra));
+      return f;
+    };
+    switch (it.type) {
+      case 'line': case 'text': {
+        const f = txt(it.type === 'line' ? 'input' : 'textarea', { maxlength: '3000' });
+        f.value = v != null ? v : (it.prefill ? it.prefill() : '');
+        wrap.append(f); break;
+      }
+      case 'money': {
+        const m = el('div', { class: 'money' });
+        const f = txt('input', { inputmode: 'numeric', autocomplete: 'off', placeholder: '0' });
+        f.value = v || '';
+        f.addEventListener('input', () => {
+          const d = f.value.replace(/\D/g, '').slice(0, 8);
+          f.value = d ? Number(d).toLocaleString('he-IL') : '';
+        });
+        m.append(f); wrap.append(m); break;
+      }
+      case 'trio': {
+        const g = el('div', { class: 'trio' });
+        [0, 1, 2].forEach(i => {
+          const f = el('input', { class: 'field', name: it.id, maxlength: '100', placeholder: (i + 1) + '.', id: i ? null : 'f-' + it.id });
+          f.value = (v || [])[i] || '';
+          g.append(f);
+        });
+        wrap.append(g); break;
+      }
+      case 'scale': case 'radio': case 'radioText': case 'checks': {
+        const opts = it.type === 'scale' ? ['1', '2', '3', '4', '5'] : it.options;
+        const g = el('div', { class: 'pills' + (it.type === 'scale' ? ' scale' : ''), role: it.type === 'checks' ? 'group' : 'radiogroup', 'aria-labelledby': 'l-' + it.id });
+        const chosen = it.type === 'checks' ? (v || []) : (it.type === 'radioText' ? (v || {}).c : v);
+        opts.forEach(o => {
+          const l = el('label');
+          const inp = el('input', { type: it.type === 'checks' ? 'checkbox' : 'radio', name: it.id, value: o });
+          inp.checked = Array.isArray(chosen) ? chosen.includes(o) : chosen === o;
+          l.append(inp, el('span', null, o));
+          g.append(l);
+        });
+        wrap.append(g);
+        if (it.type === 'scale') {
+          const ends = el('div', { class: 'scale-ends' });
+          ends.append(el('span', null, it.ends[0]), el('span', null, it.ends[1]));
+          wrap.append(ends);
+        }
+        if (it.type === 'checks' && it.none) {
+          g.addEventListener('change', e => {
+            const boxes = g.querySelectorAll('input');
+            if (e.target.value === it.none && e.target.checked) boxes.forEach(b => { if (b !== e.target) b.checked = false; });
+            else if (e.target.checked) boxes.forEach(b => { if (b.value === it.none) b.checked = false; });
+          });
+        }
+        if (it.type === 'radioText') {
+          const f = el('input', { class: 'field follow', name: it.id + '-t', maxlength: '500', placeholder: it.placeholder, 'aria-label': it.q + ' ' + it.placeholder });
+          f.value = (v || {}).t || '';
+          const sync = () => { const c = g.querySelector('input:checked'); f.hidden = !(c && c.value === it.follow); };
+          g.addEventListener('change', () => { sync(); if (!f.hidden) f.focus(); });
+          sync();
+          wrap.append(f);
+        }
+        break;
+      }
+    }
+    return wrap;
+  }
+
+  function readRaw(f, it) {
+    const all = f.querySelectorAll('[name="' + it.id + '"]');
+    switch (it.type) {
+      case 'line': case 'text': case 'money': return all[0].value.trim();
+      case 'trio': return Array.from(all, x => x.value.trim());
+      case 'checks': return Array.from(all).filter(x => x.checked).map(x => x.value);
+      case 'scale': case 'radio': { const c = Array.from(all).find(x => x.checked); return c ? c.value : ''; }
+      case 'radioText': {
+        const c = Array.from(all).find(x => x.checked);
+        const t = f.querySelector('[name="' + it.id + '-t"]');
+        return { c: c ? c.value : '', t: t.value.trim() };
+      }
+    }
+  }
+
+  function answer(it, raw) {
+    switch (it.type) {
+      case 'money': return raw ? raw + ' ₪' : '';
+      case 'scale': return raw ? raw + ' מתוך 5 (1 בכלל לא, 5 בשליטה רבה)' : '';
+      case 'trio': return raw.filter(Boolean).join(' / ');
+      case 'checks': return raw.join(', ');
+      case 'radioText': return raw.c + (raw.c === it.follow && raw.t ? ': ' + raw.t : '');
+      default: return raw;
+    }
+  }
+
+  function renderQuestionnaire() {
+    const draft = loadDraft();
+    const body = $('qBody');
+    body.textContent = '';
+    Q.forEach(s => {
+      body.append(el('h2', { class: 'grp' }, s.title));
+      const card = el('div', { class: 'card' });
+      s.items.forEach(it => {
+        const row = el('div', { class: 'row' });
+        const grouped = ['scale', 'radio', 'radioText', 'checks'].includes(it.type);
+        row.append(grouped
+          ? el('span', { class: 'q', id: 'l-' + it.id }, it.q)
+          : el('label', { for: 'f-' + it.id }, it.q));
+        row.append(field(it, draft));
+        card.append(row);
+      });
+      body.append(card);
+    });
+    $('pTitle').textContent = data.privacy.title;
+    $('pPoints').textContent = '';
+    data.privacy.points.forEach(t => $('pPoints').append(el('li', null, t)));
+    $('pAgree').textContent = data.privacy.agree;
+    step(2);
+  }
+
+  $('qForm').addEventListener('input', saveDraft);
+  $('qForm').addEventListener('change', saveDraft);
+
+  $('qForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!$('consent').checked) {
+      $('qErr').textContent = 'כדי לשלוח, צריך לסמן את אישור מסירת המידע.';
+      $('consent').focus();
+      return;
+    }
+    $('qErr').textContent = '';
+    const f = $('qForm');
+    const sections = Q.map(s => ({
+      title: s.title,
+      items: s.items.map(it => ({ q: it.q, a: answer(it, readRaw(f, it)) }))
+    }));
+    const btn = $('qBtn');
+    btn.disabled = true; btn.textContent = 'שולח… (זה לוקח כמה שניות)';
+    try {
+      await Api.call('submit', { token, consent: true, sections });
+      done(data.name);
+    } catch (err) {
+      if (err.code === 'already_done') return done(data.name);
+      $('qErr').textContent = Api.errText(err.code);
+    } finally {
+      btn.disabled = false; btn.textContent = 'שליחה';
+    }
+  });
+
+  /* ---------- boot ---------- */
+  $('demo').hidden = !Api.MOCK;
+  if (!/^[a-f0-9]{64}$/.test(token)) return fatal(Api.errText('bad_link'));
+  Api.call('get', { token }).then(res => {
+    data = res;
+    if (res.status === 'done') { data.email = ''; return done(res.name); }
+    if (res.status === 'signed') return renderQuestionnaire();
+    renderContract();
+  }).catch(err => fatal(Api.errText(err.code)));
+})();
+</script>
+</body>
+</html>
