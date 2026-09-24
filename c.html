@@ -16,6 +16,17 @@
   .privacy ul{margin:.3rem 0 0;padding-inline-start:1.2rem}
   .privacy li{margin-block:.4rem;line-height:1.6;font-size:.95rem}
   .privacy li::marker{color:var(--brand)}
+  .p-summary{margin:0;font-weight:500;line-height:1.65}
+  .p-more{margin-top:.7rem}
+  .p-more summary{
+    display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;list-style:none;
+    font-weight:600;font-size:.92rem;color:var(--brand-deep);
+    background:var(--brand-soft);border-radius:10px;padding:.45rem .85rem;
+  }
+  .p-more summary::-webkit-details-marker{display:none}
+  .p-more summary::after{content:"▾";transition:transform .2s var(--ease)}
+  .p-more[open] summary::after{transform:rotate(180deg)}
+  .p-more ul{margin-top:.6rem}
   .sec-note{font-size:.86rem;color:var(--on-bg-dim);margin:-.3rem 0 .8rem}
   .intro{color:var(--on-bg-dim);font-size:.95rem;margin-top:.6rem}
   .saved{font-size:.8rem;color:var(--on-bg-dim);text-align:center;margin-top:.6rem;min-height:1.2em}
@@ -91,7 +102,13 @@
 
       <h2 class="grp" id="pTitle"></h2>
       <div class="card privacy">
-        <div class="row"><ul id="pPoints"></ul></div>
+        <div class="row">
+          <p class="p-summary" id="pSummary"></p>
+          <details class="p-more">
+            <summary>לקריאת תנאי הפרטיות המלאים</summary>
+            <ul id="pPoints"></ul>
+          </details>
+        </div>
         <div class="row">
           <label class="agree"><input type="checkbox" id="consent"><span id="pAgree"></span></label>
           <p class="err" id="qErr" role="alert"></p>
@@ -144,7 +161,7 @@
       { id: 'income', q: 'הכנסה חודשית נטו משוערת של משק הבית', type: 'money' },
       { id: 'steady', q: 'האם ההכנסה קבועה?', type: 'radio', options: ['כן', 'לא'] },
       { id: 'extra', q: 'מקורות הכנסה נוספים או הכנסות שאינן קבועות', type: 'text' },
-      { id: 'dates', q: 'באילו תאריכים נכנסות ההכנסות העיקריות', type: 'line' },
+      { id: 'dates', q: 'באילו תאריכים נכנסות ההכנסות העיקריות', type: 'radioText', options: ['1 לחודש', '10 לחודש', 'אין תאריך קבוע', 'אחר'], follow: 'אחר', placeholder: 'באיזה תאריך?' },
       { id: 'monthEnd', q: G('בסוף חודש רגיל אתם בדרך כלל:', 'בסוף חודש רגיל אתה בדרך כלל:', 'בסוף חודש רגיל את בדרך כלל:'), type: 'radio',
         options: ['בפלוס', G('מאוזנים', 'מאוזן', 'מאוזנת'), 'במינוס', G('לא יודעים', 'לא יודע', 'לא יודעת')] },
       { id: 'hardMonth', q: 'אם יש חודש שבו התזרים קשה במיוחד, מתי ולמה', type: 'text' }
@@ -156,7 +173,7 @@
       { id: 'repay', q: 'סך החזר חודשי משוער על הלוואות ומשכנתא, אם ידוע', type: 'money' },
       { id: 'urgent', q: 'האם יש תשלום דחוף שכדאי שאכיר בהתחלה', type: 'text' }
     ]},
-    { title: 'הרגלים והתנהלות משותפת', items: [
+    { title: G('הרגלים והתנהלות משותפת', 'הרגלים והתנהלות', 'הרגלים והתנהלות'), items: [
       { id: 'budget', q: 'האם יש תקציב או מעקב הוצאות כיום?', type: 'radio', options: ['כן, קבוע', 'מדי פעם', 'עדיין לא'] },
       { id: 'who', q: 'מי בדרך כלל עוקב אחר החשבונות ומקבל החלטות?', type: 'line' },
       { id: 'keep', q: G('איזו הוצאה או פעילות חשוב לכם במיוחד לשמר גם במהלך התהליך', 'איזו הוצאה או פעילות חשוב לך במיוחד לשמר גם במהלך התהליך', 'איזו הוצאה או פעילות חשוב לך במיוחד לשמר גם במהלך התהליך'), type: 'text' },
@@ -437,6 +454,7 @@
       body.append(card);
     });
     $('pTitle').textContent = data.privacy.title;
+    $('pSummary').textContent = data.privacy.summary;
     $('pPoints').textContent = '';
     data.privacy.points.forEach(t => $('pPoints').append(el('li', null, t)));
     $('pAgree').textContent = data.privacy.agree;
