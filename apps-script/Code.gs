@@ -14,19 +14,34 @@ const SHEET_NAME = 'clients';
 const TZ = 'Asia/Jerusalem';
 const FONT = 'Rubik';
 
+// נוסח שתלוי במגדר: G(זוג, זכר, נקבה). מחרוזת רגילה = אותו נוסח לכולם.
+function G(c, m, f) { return { c: c, m: m, f: f }; }
+
 const CONTRACT_TITLE = 'כמה הסכמות לפני שיוצאים לדרך';
 const CLAUSES = [
-  'הליווי כולל ארבע פגישות שיתקיימו לאורך כארבעה חודשים. יחד נכיר את המצב הכלכלי שלכם, נבנה תוכנית, נבדוק איך היא עובדת בפועל ונתכנן את הצעדים הבאים.',
-  'כדי שאוכל להתאים לכם תוכנית מדויקת, חשוב שתשתפו אותי במידע מלא ונכון ככל האפשר. שקיפות היא חלק משמעותי מהתהליך.',
-  'אני אביא לתהליך ידע, כלים וליווי אישי. ההתקדמות תלויה גם בשיתוף הפעולה שלכם וביישום הצעדים שנסכם יחד בין הפגישות.',
-  'במהלך הליווי תקבלו כלים לניהול ולתכנון הכסף שלכם. חלק מהשינויים מורגשים מהר, ואחרים דורשים זמן והתמדה. אין הבטחה לתוצאה מסוימת או לפתרון מיידי.',
-  'אני מתחייב ללוות אתכם בגובה העיניים, ללא שיפוטיות, ולשמור על פרטיות המידע שתשתפו איתי. ההחלטות הכלכליות והביצוע שלהן נשארים בידיכם.',
+  G('הליווי כולל ארבע פגישות שיתקיימו לאורך כארבעה חודשים. יחד נכיר את המצב הכלכלי שלכם, נבנה תוכנית, נבדוק איך היא עובדת בפועל ונתכנן את הצעדים הבאים.',
+    'הליווי כולל ארבע פגישות שיתקיימו לאורך כארבעה חודשים. יחד נכיר את המצב הכלכלי שלך, נבנה תוכנית, נבדוק איך היא עובדת בפועל ונתכנן את הצעדים הבאים.',
+    'הליווי כולל ארבע פגישות שיתקיימו לאורך כארבעה חודשים. יחד נכיר את המצב הכלכלי שלך, נבנה תוכנית, נבדוק איך היא עובדת בפועל ונתכנן את הצעדים הבאים.'),
+  G('כדי שאוכל להתאים לכם תוכנית מדויקת, חשוב שתשתפו אותי במידע מלא ונכון ככל האפשר. שקיפות היא חלק משמעותי מהתהליך.',
+    'כדי שאוכל להתאים לך תוכנית מדויקת, חשוב שתשתף אותי במידע מלא ונכון ככל האפשר. שקיפות היא חלק משמעותי מהתהליך.',
+    'כדי שאוכל להתאים לך תוכנית מדויקת, חשוב שתשתפי אותי במידע מלא ונכון ככל האפשר. שקיפות היא חלק משמעותי מהתהליך.'),
+  G('אני אביא לתהליך ידע, כלים וליווי אישי. ההתקדמות תלויה גם בשיתוף הפעולה שלכם וביישום הצעדים שנסכם יחד בין הפגישות.',
+    'אני אביא לתהליך ידע, כלים וליווי אישי. ההתקדמות תלויה גם בשיתוף הפעולה שלך וביישום הצעדים שנסכם יחד בין הפגישות.',
+    'אני אביא לתהליך ידע, כלים וליווי אישי. ההתקדמות תלויה גם בשיתוף הפעולה שלך וביישום הצעדים שנסכם יחד בין הפגישות.'),
+  G('במהלך הליווי תקבלו כלים לניהול ולתכנון הכסף שלכם. חלק מהשינויים מורגשים מהר, ואחרים דורשים זמן והתמדה. אין הבטחה לתוצאה מסוימת או לפתרון מיידי.',
+    'במהלך הליווי תקבל כלים לניהול ולתכנון הכסף שלך. חלק מהשינויים מורגשים מהר, ואחרים דורשים זמן והתמדה. אין הבטחה לתוצאה מסוימת או לפתרון מיידי.',
+    'במהלך הליווי תקבלי כלים לניהול ולתכנון הכסף שלך. חלק מהשינויים מורגשים מהר, ואחרים דורשים זמן והתמדה. אין הבטחה לתוצאה מסוימת או לפתרון מיידי.'),
+  G('אני מתחייב ללוות אתכם בגובה העיניים, ללא שיפוטיות, ולשמור על פרטיות המידע שתשתפו איתי. ההחלטות הכלכליות והביצוע שלהן נשארים בידיכם.',
+    'אני מתחייב ללוות אותך בגובה העיניים, ללא שיפוטיות, ולשמור על פרטיות המידע שתשתף איתי. ההחלטות הכלכליות והביצוע שלהן נשארים בידיך.',
+    'אני מתחייב ללוות אותך בגובה העיניים, ללא שיפוטיות, ולשמור על פרטיות המידע שתשתפי איתי. ההחלטות הכלכליות והביצוע שלהן נשארים בידייך.'),
   'אם נצטרך לשנות מועד של פגישה, נעדכן זה את זה מוקדם ככל האפשר ונתאם מועד חדש.',
   'אם אחד הצדדים ירצה לסיים את הליווי לפני תום התהליך, נחשב את התמורה עבור הפגישות והעבודה שבוצעו בפועל, והיתרה תוחזר בהתאם לדין.',
   'הליווי מתמקד בניהול כלכלת הבית ובתזרים המשפחתי. בנושאים שדורשים ייעוץ השקעות, ייעוץ פנסיוני, ייעוץ מס או ייעוץ משפטי, נפנה במידת הצורך לאיש מקצוע מתאים.',
   'פניות, שאלות והבהרות בין הפגישות יתקיימו בוואטסאפ בימים א׳–ה׳, בין השעות 10:00–18:00. אפשר לתאם מראש גם שיחת טלפון.'
 ];
-const CONTRACT_AGREE = 'קראתי את ההסכמות ואני מאשר/ת אותן.';
+const CONTRACT_AGREE = G('קראתי את ההסכמות ואני מאשר/ת אותן.',
+  'קראתי את ההסכמות ואני מאשר אותן.',
+  'קראתי את ההסכמות ואני מאשרת אותן.');
 
 const PRIVACY_TITLE = 'פרטיות ושמירת המידע';
 const PRIVACY_POINTS = [
@@ -36,10 +51,37 @@ const PRIVACY_POINTS = [
   'המידע נשמר עד חצי שנה אחרי סיום תהליך הליווי, ואז נמחק.',
   'אפשר לבקש לעיין במידע, לתקן אותו או למחוק אותו בכל שלב, במייל ' + CONTACT_EMAIL + '.'
 ];
-const PRIVACY_AGREE = 'קראתי ואני מאשר/ת את מסירת המידע לחי אליאסי לטובת תהליך הליווי הכלכלי, בהתאם לאמור למעלה.';
+const PRIVACY_AGREE = G('קראתי ואני מאשר/ת את מסירת המידע לחי אליאסי לטובת תהליך הליווי הכלכלי, בהתאם לאמור למעלה.',
+  'קראתי ואני מאשר את מסירת המידע לחי אליאסי לטובת תהליך הליווי הכלכלי, בהתאם לאמור למעלה.',
+  'קראתי ואני מאשרת את מסירת המידע לחי אליאסי לטובת תהליך הליווי הכלכלי, בהתאם לאמור למעלה.');
 
+// the client's copy email
+const CLIENT_MAIL = {
+  subject: G('העתק ההסכם שלכם עם ', 'העתק ההסכם שלך עם ', 'העתק ההסכם שלך עם '),
+  thanks: G('תודה שחתמתם ומילאתם את השאלון.', 'תודה שחתמת ומילאת את השאלון.', 'תודה שחתמת ומילאת את השאלון.'),
+  attached: G('מצורף העתק של ההסכמות שחתמתם עליהן.', 'מצורף העתק של ההסכמות שחתמת עליהן.', 'מצורף העתק של ההסכמות שחתמת עליהן.')
+};
+
+const GENDERS = { c: 'זוג', m: 'זכר', f: 'נקבה' };
+
+// new columns go at the end, so existing sheets keep working
 const COLS = ['token', 'name', 'amount', 'created', 'status', 'email', 'phone', 'signedAt',
-  'signatureId', 'contractPdfId', 'questionnairePdfId', 'consentAt', 'completedAt', 'answers'];
+  'signatureId', 'contractPdfId', 'questionnairePdfId', 'consentAt', 'completedAt', 'answers', 'gender'];
+
+function gender_(g) {
+  return GENDERS[g] ? g : 'c';
+}
+
+function pick_(v, g) {
+  return typeof v === 'string' ? v : v[gender_(g)];
+}
+
+function texts_(g) {
+  return {
+    contract: { title: CONTRACT_TITLE, clauses: CLAUSES.map(t => pick_(t, g)), agree: pick_(CONTRACT_AGREE, g) },
+    privacy: { title: PRIVACY_TITLE, points: PRIVACY_POINTS, agree: pick_(PRIVACY_AGREE, g) }
+  };
+}
 
 /* ---------- HTTP ---------- */
 
@@ -96,7 +138,7 @@ function auth_(pw) {
 function create_(req) {
   const name = clean_(req.name, 80);
   const amount = Math.round(Number(req.amount));
-  if (!name || !(amount > 0) || amount > 1000000) throw new Error('invalid');
+  if (!name || !(amount > 0) || amount > 1000000 || !GENDERS[req.gender]) throw new Error('invalid');
   const token = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
   withLock_(() => {
     const row = COLS.map(() => '');
@@ -105,6 +147,7 @@ function create_(req) {
     row[COLS.indexOf('amount')] = amount;
     row[COLS.indexOf('created')] = new Date();
     row[COLS.indexOf('status')] = 'sent';
+    row[COLS.indexOf('gender')] = req.gender;
     sheet_().appendRow(row);
   });
   return { token: token };
@@ -122,6 +165,7 @@ function list_() {
       amount: Number(r.amount),
       created: iso_(r.created),
       status: r.status,
+      gender: gender_(r.gender),
       contractUrl: fileUrl_(r.contractPdfId),
       questionnaireUrl: fileUrl_(r.questionnairePdfId)
     };
@@ -133,15 +177,14 @@ function list_() {
 function get_(token) {
   const r = find_(token).rec;
   if (r.status === 'done') return { status: 'done', name: String(r.name) };
-  return {
+  return Object.assign({
     status: r.status,
     name: String(r.name),
     amount: Number(r.amount),
     email: String(r.email || ''),
     phone: String(r.phone || ''),
-    contract: { title: CONTRACT_TITLE, clauses: CLAUSES, agree: CONTRACT_AGREE },
-    privacy: { title: PRIVACY_TITLE, points: PRIVACY_POINTS, agree: PRIVACY_AGREE }
-  };
+    gender: gender_(r.gender)
+  }, texts_(r.gender));
 }
 
 function sign_(req) {
@@ -163,7 +206,7 @@ function sign_(req) {
   const signedAt = new Date();
   const sigBlob = Utilities.newBlob(Utilities.base64Decode(sig.split(',')[1]), 'image/png', 'חתימה - ' + r.name + '.png');
   const sigFile = folder_().createFile(sigBlob);
-  const pdf = contractPdf_({ name: r.name, amount: r.amount, email: email, phone: phone, signedAt: signedAt }, sigBlob);
+  const pdf = contractPdf_({ name: r.name, amount: r.amount, email: email, phone: phone, signedAt: signedAt, gender: r.gender }, sigBlob);
 
   set_(f.sh, f.row, {
     status: 'signed', email: email, phone: phone, signedAt: signedAt,
@@ -194,13 +237,14 @@ function submit_(req) {
 
   // client first, so a bad address can be flagged in Hai's email
   let clientError = '';
+  const mail = { thanks: pick_(CLIENT_MAIL.thanks, r.gender), attached: pick_(CLIENT_MAIL.attached, r.gender) };
   try {
-    GmailApp.sendEmail(String(r.email), 'העתק ההסכם שלכם עם ' + OWNER_NAME,
-      'היי ' + r.name + ',\n\nתודה שחתמתם ומילאתם את השאלון. מצורף העתק של ההסכמות שחתמתם עליהן.\nנתראה בפגישה הראשונה.\n\n' + OWNER_NAME,
+    GmailApp.sendEmail(String(r.email), pick_(CLIENT_MAIL.subject, r.gender) + OWNER_NAME,
+      'היי ' + r.name + ',\n\n' + mail.thanks + ' ' + mail.attached + '\nנתראה בפגישה הראשונה.\n\n' + OWNER_NAME,
       {
         name: OWNER_NAME,
         htmlBody: mailHtml_('היי ' + esc_(r.name) + ',',
-          ['תודה שחתמתם ומילאתם את השאלון.', 'מצורף העתק של ההסכמות שחתמתם עליהן.', 'נתראה בפגישה הראשונה.'], OWNER_NAME),
+          [mail.thanks, mail.attached, 'נתראה בפגישה הראשונה.'], OWNER_NAME),
         attachments: [contract.getBlob()]
       });
   } catch (err) {
@@ -208,7 +252,7 @@ function submit_(req) {
   }
 
   const lines = [
-    'שם: ' + esc_(r.name),
+    'שם: ' + esc_(r.name) + ' (' + GENDERS[gender_(r.gender)] + ')',
     'סכום: ' + money_(r.amount),
     'מייל: ' + esc_(r.email),
     'טלפון: ' + esc_(r.phone),
@@ -233,13 +277,14 @@ function submit_(req) {
 /* ---------- PDFs ---------- */
 
 function contractPdf_(c, sigBlob) {
+  const t = texts_(c.gender).contract;
   return makePdf_('חוזה - ' + c.name, body => {
     title_(body, CONTRACT_TITLE);
     para_(body, BRAND, { size: 10, color: '#5A5D69', after: 14 });
     para_(body, 'שם הלקוח: ' + c.name, { bold: true });
     para_(body, 'התמורה עבור תהליך הליווי: ' + money_(c.amount), { bold: true, after: 12 });
-    CLAUSES.forEach((t, i) => para_(body, (i + 1) + '. ' + t, { after: 8 }));
-    para_(body, CONTRACT_AGREE, { bold: true, before: 10, after: 8 });
+    t.clauses.forEach((x, i) => para_(body, (i + 1) + '. ' + x, { after: 8 }));
+    para_(body, t.agree, { bold: true, before: 10, after: 8 });
 
     const img = body.appendImage(sigBlob);
     const w = 200;
@@ -265,7 +310,7 @@ function questionnairePdf_(r, sections, consentAt) {
     });
     para_(body, PRIVACY_TITLE, { bold: true, size: 13, color: '#C2410C', before: 16, after: 4 });
     PRIVACY_POINTS.forEach(t => para_(body, '• ' + t, { size: 10 }));
-    para_(body, '☑ ' + PRIVACY_AGREE, { bold: true, size: 10, before: 6 });
+    para_(body, '☑ ' + pick_(PRIVACY_AGREE, r.gender), { bold: true, size: 10, before: 6 });
     para_(body, 'אושר על ידי ' + r.name + ' בתאריך ' + fmt_(consentAt), { size: 10, color: '#5A5D69' });
   });
 }
@@ -319,6 +364,8 @@ function sheet_() {
     sh.appendRow(COLS);
     sh.setFrozenRows(1);
     sh.setRightToLeft(true);
+  } else if (sh.getRange(1, COLS.length).getValue() !== COLS[COLS.length - 1]) {
+    sh.getRange(1, 1, 1, COLS.length).setValues([COLS]);
   }
   return sh;
 }

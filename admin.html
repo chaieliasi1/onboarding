@@ -26,6 +26,7 @@
   .badge.signed{background:var(--brand-soft);color:var(--brand-deep)}
   .badge.done{background:var(--emerald-wash);color:var(--emerald-deep)}
   .client .links{display:flex;gap:.8rem;font-size:.86rem;margin-top:.35rem;flex-wrap:wrap}
+  #gender[data-invalid] span{border-color:var(--rose)}
   .empty{color:var(--ink-dim);text-align:center}
   .toprow{display:flex;justify-content:space-between;align-items:baseline}
 </style>
@@ -61,6 +62,14 @@
         <input class="field" id="name" autocomplete="off" maxlength="80" placeholder="למשל: נועה ואיתי כהן" required>
       </div>
       <div class="row">
+        <span class="q" id="gLabel">פנייה בטופס</span>
+        <div class="pills" role="radiogroup" aria-labelledby="gLabel" id="gender">
+          <label><input type="radio" name="gender" value="c"><span>זוג</span></label>
+          <label><input type="radio" name="gender" value="m"><span>זכר</span></label>
+          <label><input type="radio" name="gender" value="f"><span>נקבה</span></label>
+        </div>
+      </div>
+      <div class="row">
         <label for="amount">הסכום שסגרנו</label>
         <div class="money"><input class="field" id="amount" inputmode="numeric" autocomplete="off" placeholder="0" required></div>
         <p class="err" id="newErr" role="alert"></p>
@@ -94,6 +103,7 @@
 <script>
 (function () {
   const $ = id => document.getElementById(id);
+  const GENDER = { c: 'זוג', m: 'זכר', f: 'נקבה' };
   const STATUS = { sent: 'נשלח', signed: 'חתם, לא סיים שאלון', done: 'סיים' };
   let password = '';
 
@@ -141,7 +151,7 @@
       const info = document.createElement('div');
       const b = document.createElement('b'); b.textContent = c.name;
       const s = document.createElement('small');
-      s.textContent = Api.money(c.amount) + ' · ' + new Date(c.created).toLocaleDateString('he-IL');
+      s.textContent = [Api.money(c.amount), GENDER[c.gender], new Date(c.created).toLocaleDateString('he-IL')].filter(Boolean).join(' · ');
       info.append(b, s);
       const links = document.createElement('div'); links.className = 'links';
       [['חוזה חתום', c.contractUrl], ['שאלון', c.questionnaireUrl]].forEach(([t, href]) => {
@@ -192,14 +202,17 @@
     const name = $('name').value.trim();
     const amount = Number($('amount').value.replace(/\D/g, ''));
     $('name').setAttribute('aria-invalid', !name);
+    const g = document.querySelector('[name="gender"]:checked');
+    const gender = g ? g.value : '';
     $('amount').setAttribute('aria-invalid', !(amount > 0));
+    $('gender').toggleAttribute('data-invalid', !gender);
     $('newErr').textContent = '';
-    if (!name || !(amount > 0)) { $('newErr').textContent = 'צריך שם וסכום.'; return; }
+    if (!name || !gender || !(amount > 0)) { $('newErr').textContent = 'צריך שם, פנייה (זוג / זכר / נקבה) וסכום.'; return; }
 
     const btn = $('createBtn');
     btn.disabled = true; btn.textContent = 'יוצר…';
     try {
-      const { token } = await Api.call('create', { password, name, amount });
+      const { token } = await Api.call('create', { password, name, amount, gender });
       const url = clientUrl(token);
       $('rName').textContent = name;
       $('rLink').textContent = url;

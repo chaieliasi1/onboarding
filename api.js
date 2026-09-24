@@ -55,10 +55,7 @@ window.ONBOARDING_API = 'https://script.google.com/macros/s/AKfycbylfirMmGbkhhPE
     texts = new Promise((ok, no) => {
       const s = document.createElement('script');
       s.src = 'apps-script/Code.gs';
-      s.onload = () => ok({
-        contract: { title: CONTRACT_TITLE, clauses: CLAUSES, agree: CONTRACT_AGREE },
-        privacy: { title: PRIVACY_TITLE, points: PRIVACY_POINTS, agree: PRIVACY_AGREE }
-      });
+      s.onload = () => ok(texts_); // texts_(gender) from Code.gs
       s.onerror = no;
       document.head.appendChild(s);
     });
@@ -84,16 +81,17 @@ window.ONBOARDING_API = 'https://script.google.com/macros/s/AKfycbylfirMmGbkhhPE
         needPw();
         const name = String(d.name || '').trim();
         const amount = Math.round(Number(d.amount));
-        if (!name || !(amount > 0)) fail('invalid');
+        if (!name || !(amount > 0) || !['c', 'm', 'f'].includes(d.gender)) fail('invalid');
         const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
-        all[token] = { name, amount, created: new Date().toISOString(), status: 'sent', email: '', phone: '' };
+        all[token] = { name, amount, created: new Date().toISOString(), status: 'sent', email: '', phone: '', gender: d.gender };
         save();
         return { token };
       }
       case 'get': {
         const r = rec();
         if (r.status === 'done') return { status: 'done', name: r.name };
-        return Object.assign({ status: r.status, name: r.name, amount: r.amount, email: r.email, phone: r.phone }, await loadTexts());
+        const gender = r.gender || 'c';
+        return Object.assign({ status: r.status, name: r.name, amount: r.amount, email: r.email, phone: r.phone, gender }, (await loadTexts())(gender));
       }
       case 'sign': {
         const r = rec();
