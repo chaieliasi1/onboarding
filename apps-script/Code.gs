@@ -48,6 +48,9 @@ const PRIVACY_TITLE = 'פרטיות ושמירת המידע';
 const PRIVACY_SUMMARY = 'המידע הכלכלי שבשאלון נמסר רק לחי אליאסי, לטובת תהליך הליווי בלבד, ונשמר עד חצי שנה אחרי סיום הליווי. אפשר לבקש לעיין בו, לתקן או למחוק אותו בכל שלב.';
 const PRIVACY_POINTS = [
   'המידע בשאלון נמסר אך ורק לטובת תהליך הליווי הכלכלי של חי אליאסי.',
+  G('מסירת המידע נעשית מרצונכם. בלי אישור לא ניתן לשלוח את השאלון.',
+    'מסירת המידע נעשית מרצונך. בלי אישור לא ניתן לשלוח את השאלון.',
+    'מסירת המידע נעשית מרצונך. בלי אישור לא ניתן לשלוח את השאלון.'),
   'רק חי אליאסי נחשף למידע. הוא לא מועבר לאף גורם אחר.',
   'השאלון וההסכם החתום נשמרים בחשבון הגוגל של חי (Google Drive ו-Google Sheets) ונשלחים דרך Gmail. השרתים של גוגל עשויים להיות ממוקמים מחוץ לישראל.',
   'המידע נשמר עד חצי שנה אחרי סיום תהליך הליווי, ואז נמחק.',
@@ -81,7 +84,7 @@ function pick_(v, g) {
 function texts_(g) {
   return {
     contract: { title: CONTRACT_TITLE, clauses: CLAUSES.map(t => pick_(t, g)), agree: pick_(CONTRACT_AGREE, g) },
-    privacy: { title: PRIVACY_TITLE, summary: PRIVACY_SUMMARY, points: PRIVACY_POINTS, agree: pick_(PRIVACY_AGREE, g) }
+    privacy: { title: PRIVACY_TITLE, summary: PRIVACY_SUMMARY, points: PRIVACY_POINTS.map(t => pick_(t, g)), agree: pick_(PRIVACY_AGREE, g) }
   };
 }
 
@@ -311,7 +314,7 @@ function questionnairePdf_(r, sections, consentAt) {
       });
     });
     para_(body, PRIVACY_TITLE, { bold: true, size: 13, color: '#C2410C', before: 16, after: 4 });
-    PRIVACY_POINTS.forEach(t => para_(body, '• ' + t, { size: 10 }));
+    texts_(r.gender).privacy.points.forEach(t => para_(body, '• ' + t, { size: 10 }));
     para_(body, '☑ ' + pick_(PRIVACY_AGREE, r.gender), { bold: true, size: 10, before: 6 });
     para_(body, 'אושר על ידי ' + r.name + ' בתאריך ' + fmt_(consentAt), { size: 10, color: '#5A5D69' });
   });
