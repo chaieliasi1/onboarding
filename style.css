@@ -49,7 +49,10 @@ a{color:var(--brand-deep);font-weight:600}
 
 .page{max-width:37rem;margin-inline:auto;padding-inline:clamp(1rem,4.5vw,1.7rem)}
 
-.mast{padding-block:1.4rem .4rem;display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap}
+.mast{padding-block:1.4rem .4rem;display:flex;align-items:center;gap:.8rem}
+.mast .name{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap}
+.logo{flex:none;width:44px;height:44px;border-radius:12px;background:#F4F2EA;display:grid;place-items:center}
+.logo svg{display:block;width:30px;height:auto}
 .mast b{font-weight:700;font-size:1.08rem;color:var(--on-bg);letter-spacing:-.01em}
 .mast span{font-size:.85rem;color:var(--on-bg-dim)}
 
