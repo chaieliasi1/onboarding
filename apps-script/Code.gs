@@ -102,7 +102,7 @@ function doPost(e) {
     return json_(Object.assign({ ok: true }, route_(req)));
   } catch (err) {
     const code = String(err && err.message || err);
-    if (!/^(auth|locked|no_password|bad_link|already_done|not_signed|invalid)$/.test(code)) console.error(err);
+    if (!/^(auth|locked|no_password|bad_link|already_done|not_signed|invalid|busy|exists|not_found)$/.test(code)) console.error(err);
     return json_({ ok: false, error: code });
   }
 }
@@ -114,7 +114,7 @@ function route_(req) {
     case 'get': return get_(req.token);
     case 'sign': return withLock_(() => sign_(req));
     case 'submit': return withLock_(() => submit_(req));
-    default: throw new Error('invalid');
+    default: return crmRoute_(req); // lead + crm_* in Crm.gs
   }
 }
 
@@ -279,6 +279,11 @@ function submit_(req) {
   set_(f.sh, f.row, {
     status: 'done', questionnairePdfId: qPdf.getId(), consentAt: consentAt,
     completedAt: new Date(), answers: JSON.stringify(sections).slice(0, 45000)
+  });
+  crmOnboardDone_(String(req.token), {
+    name: String(r.name), gender: gender_(r.gender), amount: Number(r.amount),
+    email: String(r.email), phone: String(r.phone),
+    contractUrl: fileUrl_(r.contractPdfId), questionnaireUrl: fileUrl_(qPdf.getId())
   });
   return { status: 'done' };
 }
