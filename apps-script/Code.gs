@@ -298,7 +298,7 @@ function contractPdf_(c, sigBlob) {
     const img = body.appendImage(sigBlob);
     const w = 200;
     img.setHeight(Math.round(img.getHeight() * w / img.getWidth())).setWidth(w);
-    img.getParent().asParagraph().setLeftToRight(false).setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
+    img.getParent().asParagraph().setLeftToRight(false).setAlignment(ALIGN_RIGHT_);
 
     para_(body, 'חתימה: ' + c.name, { size: 10 });
     para_(body, 'מייל: ' + c.email + '   |   טלפון: ' + c.phone, { size: 10 });
@@ -329,7 +329,7 @@ function makePdf_(name, build) {
   const body = doc.getBody();
   body.setMarginTop(48).setMarginBottom(48).setMarginLeft(56).setMarginRight(56);
   const logo = body.appendImage(logoBlob_()).setWidth(72).setHeight(48);
-  logo.getParent().asParagraph().setLeftToRight(false).setAlignment(DocumentApp.HorizontalAlignment.RIGHT).setSpacingAfter(12);
+  logo.getParent().asParagraph().setLeftToRight(false).setAlignment(ALIGN_RIGHT_).setSpacingAfter(12);
   build(body);
   const first = body.getChild(0);
   if (body.getNumChildren() > 1 && first.getType() === DocumentApp.ElementType.PARAGRAPH && !first.asParagraph().getText()) {
@@ -344,6 +344,9 @@ function makePdf_(name, build) {
   return pdf;
 }
 
+// בפסקה מימין לשמאל, גוגל דוקס הופך את ההגדרה: LEFT = תחילת השורה = ימין. RIGHT יוצא שמאל.
+const ALIGN_RIGHT_ = DocumentApp.HorizontalAlignment.LEFT;
+
 function title_(body, text) {
   para_(body, text, { bold: true, size: 20, after: 2 });
 }
@@ -352,7 +355,7 @@ function para_(body, text, o) {
   o = o || {};
   const p = body.appendParagraph(text);
   p.setLeftToRight(false)
-    .setAlignment(DocumentApp.HorizontalAlignment.RIGHT)
+    .setAlignment(ALIGN_RIGHT_)
     .setSpacingBefore(o.before || 0)
     .setSpacingAfter(o.after || 0)
     .setLineSpacing(1.3);
