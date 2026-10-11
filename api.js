@@ -10,7 +10,7 @@ window.ONBOARDING_API = 'https://script.google.com/macros/s/AKfycbylfirMmGbkhhPE
     locked: 'יותר מדי ניסיונות. אפשר לנסות שוב בעוד רבע שעה.',
     no_password: 'לא הוגדרה סיסמת ניהול (ראו SETUP.md).',
     bad_link: 'הקישור לא תקין. כדאי לבקש מחי קישור חדש.',
-    already_done: 'הטופס כבר מולא. תודה!',
+    already_done: 'הטופס כבר נשלח. תודה!',
     not_signed: 'צריך לחתום קודם על ההסכמות.',
     invalid: 'חלק מהפרטים חסרים או לא תקינים.',
     network: 'בעיית תקשורת. בדקו את החיבור ונסו שוב.'

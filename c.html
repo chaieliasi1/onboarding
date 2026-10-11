@@ -230,7 +230,7 @@
     $('doneTitle').textContent = 'תודה' + (name ? ', ' + name : '') + '!';
     $('doneText').textContent = data && data.email
       ? 'הכל התקבל. העתק של ההסכם החתום בדרך למייל ' + data.email + '.'
-      : 'הטופס כבר מולא והכל התקבל.';
+      : 'הטופס כבר נשלח והכל התקבל.';
     if (docs) renderDocs(docs);
     try { localStorage.removeItem('onb-draft-' + token); } catch (e) {}
     step(3);
