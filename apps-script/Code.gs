@@ -66,7 +66,39 @@ const PRIVACY_AGREE = G('קראתי ואני מאשר/ת את מסירת המי�
 const CLIENT_MAIL = {
   subject: G('העתק ההסכם שלכם עם ', 'העתק ההסכם שלך עם ', 'העתק ההסכם שלך עם '),
   thanks: G('תודה שחתמתם ומילאתם את השאלון.', 'תודה שחתמת ומילאת את השאלון.', 'תודה שחתמת ומילאת את השאלון.'),
-  attached: G('מצורף העתק של ההסכמות שחתמתם עליהן.', 'מצורף העתק של ההסכמות שחתמת עליהן.', 'מצורף העתק של ההסכמות שחתמת עליהן.')
+  attached: G('מצורפים העתק של ההסכמות שחתמתם עליהן ורשימת המסמכים לפגישה הראשונה.',
+    'מצורפים העתק של ההסכמות שחתמת עליהן ורשימת המסמכים לפגישה הראשונה.',
+    'מצורפים העתק של ההסכמות שחתמת עליהן ורשימת המסמכים לפגישה הראשונה.')
+};
+
+// מסמכים לפגישה הראשונה: מוצג ללקוח במסך האחרון ונשלח אליו כ-PDF
+const DOCS = {
+  title: 'איסוף מסמכים לקראת פגישה ראשונה',
+  intro: [
+    'היי!',
+    'אני שמח ומתרגש לקראת תחילת התהליך המשותף שלנו.',
+    'כדי שנוכל להפיק את המירב מהפגישה הראשונה, הכנתי רשימה מרוכזת של המסמכים הדרושים. הרשימה נראית מעט ארוכה, אבל את כל המסמכים ניתן להפיק תוך דקות ספורות דרך האפליקציות של הבנק וחברות האשראי.'
+  ],
+  heading: 'מה להכין לפגישה? (שלושת החודשים האחרונים):',
+  items: [
+    { label: 'חשבונות בנק', text: G('דפי עו"ש מלאים של כל החשבונות שברשותכם.', 'דפי עו"ש מלאים של כל החשבונות שברשותך.', 'דפי עו"ש מלאים של כל החשבונות שברשותך.') },
+    { label: 'כרטיסי אשראי', text: 'פירוט חיובים חודשי לכל הכרטיסים.' },
+    { label: 'הוצאות קבועות', text: 'חשבונות תקופתיים (מים, גז, ארנונה, חשמל).' },
+    { label: 'הכנסות', text: G('פירוט כל מקורות ההכנסה שלכם (תלושי שכר, קצבאות, הכנסות נוספות).', 'פירוט כל מקורות ההכנסה שלך (תלושי שכר, קצבאות, הכנסות נוספות).', 'פירוט כל מקורות ההכנסה שלך (תלושי שכר, קצבאות, הכנסות נוספות).') },
+    { label: 'חסכונות ופנסיה', text: 'דו"חות עדכניים של קופות פנסיה, גמל, השתלמות, ופירוט השקעות.' },
+    { label: 'הלוואות ומשכנתאות', text: 'ריכוז יתרות ותשלומים של כל הלוואה או משכנתא קיימת.' },
+    { label: 'אפליקציות תשלומים', text: 'פירוט פעולות (העברות/קבלות) באפליקציות Bit ו-Paybox.' }
+  ],
+  tipsTitle: 'דגשים חשובים:',
+  tips: [
+    { label: 'טווח זמן', text: 'המסמכים צריכים לכסות שלושה חודשים מלאים (1 לחודש עד ה-30/31 לחודש).' },
+    { label: 'שינוי התנהלות', text: G('הדגש החשוב ביותר - נא לא לבצע שום שינוי בהתנהלות הפיננסית שלכם עד הפגישה. המטרה שלי היא לראות את הדברים בדיוק כפי שהם, כדי שנוכל לבנות את התוכנית המדויקת ביותר עבורכם.',
+      'הדגש החשוב ביותר - נא לא לבצע שום שינוי בהתנהלות הפיננסית שלך עד הפגישה. המטרה שלי היא לראות את הדברים בדיוק כפי שהם, כדי שנוכל לבנות את התוכנית המדויקת ביותר עבורך.',
+      'הדגש החשוב ביותר - נא לא לבצע שום שינוי בהתנהלות הפיננסית שלך עד הפגישה. המטרה שלי היא לראות את הדברים בדיוק כפי שהם, כדי שנוכל לבנות את התוכנית המדויקת ביותר עבורך.') }
+  ],
+  outro: 'אני זמין לכל שאלה נוספת, נתראה בקרוב!',
+  // shown above the list on the screen only
+  screenshot: G('אפשר לצלם את המסך, ואתם גם תקבלו את הרשימה למייל', 'אפשר לצלם את המסך, ואתה גם תקבל את הרשימה למייל', 'אפשר לצלם את המסך, ואת גם תקבלי את הרשימה למייל')
 };
 
 const GENDERS = { c: 'זוג', m: 'זכר', f: 'נקבה' };
@@ -86,7 +118,17 @@ function pick_(v, g) {
 function texts_(g) {
   return {
     contract: { title: CONTRACT_TITLE, clauses: CLAUSES.map(t => pick_(t, g)), agree: pick_(CONTRACT_AGREE, g) },
-    privacy: { title: PRIVACY_TITLE, summary: PRIVACY_SUMMARY, points: PRIVACY_POINTS.map(t => pick_(t, g)), agree: pick_(PRIVACY_AGREE, g) }
+    privacy: { title: PRIVACY_TITLE, summary: PRIVACY_SUMMARY, points: PRIVACY_POINTS.map(t => pick_(t, g)), agree: pick_(PRIVACY_AGREE, g) },
+    docs: docs_(g)
+  };
+}
+
+function docs_(g) {
+  const items = list => list.map(x => ({ label: x.label, text: pick_(x.text, g) }));
+  return {
+    title: DOCS.title, intro: DOCS.intro, heading: DOCS.heading, items: items(DOCS.items),
+    tipsTitle: DOCS.tipsTitle, tips: items(DOCS.tips), outro: DOCS.outro,
+    screenshot: pick_(DOCS.screenshot, g), signature: OWNER_NAME
   };
 }
 
@@ -183,7 +225,7 @@ function list_() {
 
 function get_(token) {
   const r = find_(token).rec;
-  if (r.status === 'done') return { status: 'done', name: String(r.name) };
+  if (r.status === 'done') return { status: 'done', name: String(r.name), docs: docs_(r.gender) };
   return Object.assign({
     status: r.status,
     name: String(r.name),
@@ -241,6 +283,8 @@ function submit_(req) {
   const consentAt = new Date();
   const qPdf = questionnairePdf_(r, sections, consentAt);
   const contract = DriveApp.getFileById(r.contractPdfId);
+  const docs = docs_(r.gender);
+  const docsPdf = docsPdf_(r.name, docs);
 
   // client first, so a bad address can be flagged in Hai's email
   let clientError = '';
@@ -252,7 +296,7 @@ function submit_(req) {
         name: OWNER_NAME,
         htmlBody: mailHtml_('היי ' + esc_(r.name) + ',',
           [mail.thanks, mail.attached, 'נתראה בפגישה הראשונה.'], OWNER_NAME),
-        attachments: [contract.getBlob()],
+        attachments: [contract.getBlob(), docsPdf.getBlob()],
         inlineImages: { logo: logoBlob_() }
       });
   } catch (err) {
@@ -285,10 +329,24 @@ function submit_(req) {
     email: String(r.email), phone: String(r.phone),
     contractUrl: fileUrl_(r.contractPdfId), questionnaireUrl: fileUrl_(qPdf.getId())
   });
-  return { status: 'done' };
+  return { status: 'done', docs: docs };
 }
 
 /* ---------- PDFs ---------- */
+
+function docsPdf_(name, d) {
+  return makePdf_('מסמכים לפגישה ראשונה - ' + name, body => {
+    title_(body, d.title);
+    para_(body, String(name), { size: 10, color: '#5A5D69', after: 12 });
+    d.intro.forEach((t, i) => para_(body, t, { after: i === d.intro.length - 1 ? 4 : 0 }));
+    para_(body, d.heading, { bold: true, size: 13, color: '#C2410C', before: 14, after: 6 });
+    d.items.forEach((x, i) => para_(body, x.text, { lead: (i + 1) + '. ' + x.label + ':', after: 5 }));
+    para_(body, d.tipsTitle, { bold: true, size: 13, color: '#C2410C', before: 14, after: 6 });
+    d.tips.forEach(x => para_(body, x.text, { lead: '• ' + x.label + ':', after: 5 }));
+    para_(body, d.outro, { before: 14 });
+    para_(body, d.signature, { bold: true });
+  });
+}
 
 function contractPdf_(c, sigBlob) {
   const t = texts_(c.gender).contract;
@@ -356,9 +414,10 @@ function title_(body, text) {
   para_(body, text, { bold: true, size: 20, after: 2 });
 }
 
+// o.lead: bold text placed before the paragraph's text
 function para_(body, text, o) {
   o = o || {};
-  const p = body.appendParagraph(text);
+  const p = body.appendParagraph(o.lead ? o.lead + ' ' + text : text);
   p.setLeftToRight(false)
     .setAlignment(ALIGN_RIGHT_)
     .setSpacingBefore(o.before || 0)
@@ -370,6 +429,7 @@ function para_(body, text, o) {
   a[DocumentApp.Attribute.BOLD] = !!o.bold;
   a[DocumentApp.Attribute.FOREGROUND_COLOR] = o.color || '#20222A';
   p.editAsText().setAttributes(a);
+  if (o.lead) p.editAsText().setBold(0, o.lead.length - 1, true);
   return p;
 }
 

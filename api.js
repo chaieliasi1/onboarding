@@ -89,7 +89,7 @@ window.ONBOARDING_API = 'https://script.google.com/macros/s/AKfycbylfirMmGbkhhPE
       }
       case 'get': {
         const r = rec();
-        if (r.status === 'done') return { status: 'done', name: r.name };
+        if (r.status === 'done') return { status: 'done', name: r.name, docs: (await loadTexts())(r.gender || 'c').docs };
         const gender = r.gender || 'c';
         return Object.assign({ status: r.status, name: r.name, amount: r.amount, email: r.email, phone: r.phone, gender }, (await loadTexts())(gender));
       }
@@ -110,7 +110,7 @@ window.ONBOARDING_API = 'https://script.google.com/macros/s/AKfycbylfirMmGbkhhPE
         r.status = 'done';
         save();
         console.log('[demo] questionnaire', d.sections);
-        return { status: 'done' };
+        return { status: 'done', docs: (await loadTexts())(r.gender || 'c').docs };
       }
     }
     fail('invalid');
