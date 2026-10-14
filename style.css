@@ -1,4 +1,4 @@
-/* Shared look for admin.html + c.html. Mirrors finance/site/index.html (dark only, light cards). */
+/* Look for c.html. Mirrors finance/site/index.html (dark only, light cards). */
 :root{
   color-scheme:dark;
   --bg:#191920;
