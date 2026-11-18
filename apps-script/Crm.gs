@@ -10,6 +10,8 @@ const ADMIN_URL = 'https://chaieliasi1.github.io/admin/';
 const ONBOARDING_URL = 'https://chaieliasi1.github.io/onboarding/c.html?t=';
 const MEETINGS_IN_PROCESS = 4;
 const MEETING_MINUTES = 60;
+// the calendar CRM meetings go into, by name (the default calendar if it isn't found)
+const MEETINGS_CALENDAR = 'משותף חי ונועם';
 
 // new columns go at the end, so existing sheets keep working
 const CRM_COLS = ['id', 'name', 'phone', 'email', 'gender', 'stage', 'source', 'tool', 'referredBy',
@@ -24,7 +26,7 @@ const PAY_METHODS = ['bit', 'transfer', 'cash', 'other'];
 // ?src= in a tool link, so a link in the Instagram bio shows up as Instagram
 const SRC_ALIASES = { ig: 'instagram', insta: 'instagram', instagram: 'instagram', wa: 'whatsapp', whatsapp: 'whatsapp', ref: 'referral' };
 
-const STAGE_LABEL = { new: 'ליד חדש', contact: 'בקשר', intro: 'שיחת היכרות', sent: 'נשלח חוזה', signed: 'חתם', active: 'בליווי', ended: 'סיים', lost: 'לא רלוונטי' };
+const STAGE_LABEL = { new: 'ליד חדש', contact: 'בקשר', intro: 'שיחת אפיון והתאמה', sent: 'נשלח חוזה', signed: 'חתם', active: 'בליווי', ended: 'סיים', lost: 'לא רלוונטי' };
 
 /* ---------- router (called from route_ in Code.gs) ---------- */
 
@@ -121,7 +123,8 @@ function cleanData_(d) {
 /* ---------- admin ---------- */
 
 function crmList_() {
-  return { people: crmRows_(crmTable_()).map(r => summary_(r.rec)), payments: payments_(), agenda: agenda_() };
+  const rows = crmRows_(crmTable_());
+  return { people: rows.map(r => summary_(r.rec)), payments: payments_(), agenda: agenda_(rows) };
 }
 
 // every payment, for income per month
@@ -255,16 +258,13 @@ function crmMeeting_(req) {
   const start = new Date(req.at);
   if (isNaN(start)) throw new Error('invalid');
   const end = new Date(start.getTime() + (Number(req.minutes) || MEETING_MINUTES) * 60000);
-  const cal = CalendarApp.getDefaultCalendar();
-  let ev = null;
-  if (r.calendarEventId) {
-    try { ev = cal.getEventById(String(r.calendarEventId)); } catch (e) { ev = null; }
-  }
+  const cal = agendaCalendars_()[0];
+  let ev = findMeeting_(r);
   // moving a meeting keeps its kind: an intro set before signing stays an intro
   const moving = ev && r.nextMeetingAt instanceof Date;
   const kind = moving && r.nextMeetingKind ? String(r.nextMeetingKind) : processStage_(r.stage) ? 'process' : 'intro';
   const n = (Number(r.meetingsDone) || 0) + 1;
-  const title = (kind === 'process' ? 'פגישה ' + n + ' מתוך ' + MEETINGS_IN_PROCESS : 'שיחת היכרות') + ': ' + r.name;
+  const title = (kind === 'process' ? 'פגישה ' + n + ' מתוך ' + MEETINGS_IN_PROCESS : 'שיחת אפיון והתאמה') + ': ' + r.name;
   const desc = 'טלפון: ' + r.phone + '\n' + ADMIN_URL + '#p=' + r.id + (req.note ? '\n\n' + clean_(req.note, 1000, true) : '');
   if (moving) {
     ev.setTime(start, end).setTitle(title).setDescription(desc);
@@ -295,7 +295,7 @@ function crmMeetingDone_(req) {
     label = 'התקיימה פגישה ' + n + ' מתוך ' + MEETINGS_IN_PROCESS;
     Object.assign(patch, stagePatch_(r, n >= MEETINGS_IN_PROCESS ? 'ended' : 'active'));
   } else {
-    label = 'התקיימה שיחת היכרות';
+    label = 'התקיימה שיחת אפיון והתאמה';
   }
   addEvent_(r.id, 'meeting', label + (summary ? '\n' + summary : ''));
   if (patch.stage === 'ended') addEvent_(r.id, 'stage', STAGE_LABEL.ended);
@@ -322,12 +322,14 @@ function crmOnboard_(req) {
   const t = crmTable_();
   const r = byId_(t, req.id).rec;
   const res = create_({ name: r.name, amount: req.amount, gender: req.gender });
+  const amount = amount_(req.amount);
   withLock_(() => {
     const f = byId_(t, r.id); // the row may have moved while unlocked
     patchRow_(t, f.row, Object.assign({
-      onboardingToken: res.token, amount: Math.round(Number(req.amount)), gender: req.gender, updated: new Date()
+      onboardingToken: res.token, amount: typeof amount === 'number' ? amount : 0, gender: req.gender, updated: new Date()
     }, stagePatch_(f.rec, 'sent')));
-    addEvent_(r.id, 'onboarding', 'נוצר קישור לחוזה ולשאלון, על סך ' + money_(req.amount));
+    addEvent_(r.id, 'onboarding', 'נוצר קישור לחוזה ולשאלון, ' +
+      (amount === 'tbd' ? 'הסכום טרם נקבע' : amount ? 'על סך ' + money_(amount) : 'בלי סכום בחוזה'));
   });
   return Object.assign({ url: ONBOARDING_URL + res.token }, crmGet_(r.id));
 }
@@ -392,18 +394,73 @@ function crmOnboardDone_(token, info) {
 
 /* ---------- calendar ---------- */
 
-function agenda_() {
+// only meetings set from the CRM: an event whose id is some person's calendarEventId, or,
+// when moving it to another calendar gave it a new id, one titled "...: name" at that person's meeting time
+function agenda_(rows) {
+  const match = crmMeetingMatcher_(rows);
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const to = new Date(from.getTime() + 8 * 86400000);
+  const seen = {};
+  const out = [];
+  agendaCalendars_().forEach(cal => {
+    try {
+      cal.getEvents(from, to).forEach(e => {
+        // a meeting found in two calendars shows once
+        const key = match(e);
+        if (!key || seen[key]) return;
+        seen[key] = true;
+        out.push({ title: e.getTitle(), start: iso_(e.getStartTime()), end: iso_(e.getEndTime()), allDay: e.isAllDayEvent() });
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  });
+  return out.sort((a, b) => a.start.localeCompare(b.start)).slice(0, 40);
+}
+
+// event -> the CRM person id it belongs to, or ''
+function crmMeetingMatcher_(rows) {
+  const byEvent = {};
+  const bySlot = {};
+  rows.forEach(r => {
+    if (r.rec.calendarEventId) byEvent[String(r.rec.calendarEventId)] = r.rec.id;
+    if (r.rec.nextMeetingAt instanceof Date) bySlot[r.rec.name + '|' + r.rec.nextMeetingAt.getTime()] = r.rec.id;
+  });
+  return e => {
+    const title = e.getTitle();
+    const name = title.slice(title.lastIndexOf(': ') + 2);
+    return byEvent[e.getId()] || (title.indexOf(': ') >= 0 && bySlot[name + '|' + e.getStartTime().getTime()]) || '';
+  };
+}
+
+// the meetings calendar first, then the default one (meetings set before the move to the shared calendar)
+function agendaCalendars_() {
+  const cals = [];
+  try { cals.push(...CalendarApp.getCalendarsByName(MEETINGS_CALENDAR).slice(0, 1)); } catch (err) { console.error(err); }
   try {
-    const now = new Date();
-    const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const to = new Date(from.getTime() + 8 * 86400000);
-    return CalendarApp.getDefaultCalendar().getEvents(from, to).slice(0, 40).map(e => ({
-      title: e.getTitle(), start: iso_(e.getStartTime()), end: iso_(e.getEndTime()), allDay: e.isAllDayEvent()
-    }));
-  } catch (err) {
-    console.error(err);
-    return [];
+    const def = CalendarApp.getDefaultCalendar();
+    if (!cals.length || cals[0].getId() !== def.getId()) cals.push(def);
+  } catch (err) { console.error(err); }
+  return cals;
+}
+
+// a person's next meeting in the calendar. Moving an event by hand to the shared calendar gives it a
+// new id, while getEventById may still answer the old id with the event left behind, so the event
+// listed in the shared calendar at the meeting time comes first, and only then the id
+function findMeeting_(r) {
+  const cals = agendaCalendars_();
+  if (!cals.length || !r.calendarEventId) return null;
+  let ev = null;
+  if (r.nextMeetingAt instanceof Date) {
+    const at = r.nextMeetingAt.getTime();
+    const match = crmMeetingMatcher_([{ rec: r }]);
+    try { ev = cals[0].getEvents(new Date(at), new Date(at + 60000)).filter(match)[0] || null; } catch (e) { ev = null; }
   }
+  for (let i = 0; !ev && i < cals.length; i++) {
+    try { ev = cals[i].getEventById(String(r.calendarEventId)); } catch (e) { ev = null; }
+  }
+  return ev;
 }
 
 /* ---------- tables ---------- */
@@ -511,5 +568,29 @@ function addMonths_(d, n) {
 function setupCrm() {
   crmTable_();
   eventTable_();
-  console.log('יומן: ' + CalendarApp.getDefaultCalendar().getName() + '. מוכן.');
+  console.log('יומן הפגישות: ' + agendaCalendars_()[0].getName() + '. מוכן.');
+}
+
+/** בדיקה מהעורך: אילו יומנים נמצאו, ואיפה כל פגישה שנקבעה ב-CRM. */
+function checkAgenda() {
+  const cals = agendaCalendars_();
+  console.log('יומנים: ' + cals.map(c => c.getName()).join(', '));
+  crmRows_(crmTable_()).forEach(r => {
+    if (!r.rec.calendarEventId) return;
+    let where = 'לא נמצאה באף יומן';
+    cals.some(c => {
+      let ev = null;
+      try { ev = c.getEventById(String(r.rec.calendarEventId)); } catch (e) { ev = null; }
+      if (ev) where = c.getName() + ', ' + fmt_(ev.getStartTime());
+      return ev;
+    });
+    console.log(r.rec.name + ': ' + where + ' (מזהה ' + String(r.rec.calendarEventId).slice(0, 8) + ')');
+  });
+  const match = crmMeetingMatcher_(crmRows_(crmTable_()));
+  const from = new Date();
+  from.setHours(0, 0, 0, 0);
+  cals.forEach(c => c.getEvents(from, new Date(from.getTime() + 8 * 86400000)).forEach(e => {
+    console.log(c.getName() + ' | ' + fmt_(e.getStartTime()) + ' | ' + e.getTitle() + ' | מזהה ' + e.getId().slice(0, 8) + (match(e) ? ' | של ה-CRM' : ''));
+  }));
+  console.log('ביומן השבוע: ' + agenda_(crmRows_(crmTable_())).length);
 }

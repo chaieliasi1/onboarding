@@ -257,7 +257,7 @@
   function renderContract() {
     document.querySelectorAll('[data-name]').forEach(n => { n.textContent = data.name; });
     $('cTitle').textContent = data.contract.title;
-    $('cAmount').textContent = Api.money(data.amount);
+    $('cAmount').textContent = data.amount === 'tbd' ? 'טרם נקבע' : data.amount ? Api.money(data.amount) : '';
     data.contract.clauses.forEach(t => $('cClauses').append(el('li', null, t)));
     $('cAgree').textContent = data.contract.agree;
     $('email').value = data.email || '';

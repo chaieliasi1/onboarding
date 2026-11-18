@@ -40,7 +40,10 @@ function makeSheet(name) {
 const strip = r => r.map(v => (typeof v === 'string' && v[0] === "'" ? v.slice(1) : v));
 
 const mails = [];
-const calEvents = {};
+const calEvents = {}; // the shared calendar, where the CRM sets meetings
+const ghosts = {}; // old ids that getEventById on the default calendar still answers
+const sharedEvent = { start: new Date(Date.now() + 3600000), end: new Date(Date.now() + 7200000),
+  getId: () => 'shared1', getTitle: () => 'פגישה עם לקוחה', getStartTime: () => sharedEvent.start, getEndTime: () => sharedEvent.end, isAllDayEvent: () => false };
 let evSeq = 0;
 function calEvent(title, start, end, opt) {
   const id = 'ev' + (++evSeq);
@@ -65,9 +68,14 @@ const ctx = {
   PropertiesService: { getScriptProperties: () => ({ getProperty: k => ({ ADMIN_PASSWORD: 'pw', NOTIFY_EMAIL: 'hai@x' })[k] || null, setProperty() {} }) },
   GmailApp: { sendEmail: (to, subject, body, opt) => mails.push({ to, subject, body, opt }) },
   CalendarApp: { getDefaultCalendar: () => ({
-    getName: () => 'hai', createEvent: calEvent, getEventById: id => calEvents[id] || null,
-    getEvents: (a, b) => Object.values(calEvents).filter(e => e.start >= a && e.start < b)
-  }) },
+    getId: () => 'hai', getName: () => 'hai', createEvent: () => assert.fail('meetings go to the shared calendar'),
+    getEventById: id => ghosts[id] || null, getEvents: () => []
+  }),
+  // the shared calendar: a private event of Hai's and Noam's, plus the CRM meetings
+  getCalendarsByName: n => n === 'משותף חי ונועם' ? [{
+    getId: () => 'shared', getName: () => n, createEvent: calEvent, getEventById: id => calEvents[id] || null,
+    getEvents: (a, b) => [sharedEvent, ...Object.values(calEvents)].filter(e => e.start >= a && e.start < b)
+  }] : [] },
   Utilities: {
     getUuid: () => crypto.randomUUID(),
     base64Decode: s => Buffer.from(s, 'base64'),
@@ -119,10 +127,30 @@ const t1 = new Date(Date.now() + 86400000).toISOString();
 g = ok({ action: 'crm_meeting', password: pw, id: p.id, at: t1 });
 assert.equal(g.person.stage, 'intro');
 assert.equal(Object.keys(calEvents).length, 1);
-assert.match(Object.values(calEvents)[0].title, /שיחת היכרות: נועה כהן/);
+assert.match(Object.values(calEvents)[0].title, /שיחת אפיון והתאמה: נועה כהן/);
 // moving it updates the same event
 g = ok({ action: 'crm_meeting', password: pw, id: p.id, at: new Date(Date.now() + 2 * 86400000).toISOString() });
 assert.equal(Object.keys(calEvents).length, 1);
+list = ok({ action: 'crm_list', password: pw });
+// only CRM meetings: the hand-set one in the shared calendar stays out
+assert.equal(list.agenda.length, 1);
+assert.match(list.agenda[0].title, /נועה כהן/);
+// a meeting set before the switch and moved by hand to the shared calendar: a copy with a new id,
+// while the old id still answers from the default calendar
+const evId = Object.keys(calEvents)[0];
+const copy = Object.assign({}, calEvents[evId], { getId: () => 'copy1' });
+calEvents.copy1 = copy;
+ghosts[evId] = Object.assign({}, calEvents[evId], { setTime: () => assert.fail('moved the event left behind') });
+delete calEvents[evId];
+list = ok({ action: 'crm_list', password: pw });
+assert.equal(list.agenda.length, 1);
+assert.match(list.agenda[0].title, /נועה כהן/);
+// moving it from the CRM moves the copy, with no new event
+const later = new Date(Date.now() + 3 * 86400000);
+copy.setTime = (st, en) => { copy.start = st; copy.end = en; return copy; };
+g = ok({ action: 'crm_meeting', password: pw, id: p.id, at: later.toISOString() });
+assert.equal(Object.keys(calEvents).length, 1, 'no duplicate');
+assert.equal(copy.start.getTime(), later.getTime());
 list = ok({ action: 'crm_list', password: pw });
 assert.equal(list.agenda.length, 1);
 g = ok({ action: 'crm_meeting_done', password: pw, id: p.id, summary: 'סגרנו' });
@@ -192,11 +220,11 @@ assert.equal(g.person.nextMeetingKind, 'intro');
 const before = evSeq;
 g = ok({ action: 'crm_meeting', password: pw, id: z.id, at: new Date(Date.now() + 3 * 86400000).toISOString() });
 assert.equal(g.person.nextMeetingKind, 'intro');
-assert.match(calEvents[Object.keys(calEvents).pop()].title, /שיחת היכרות: זיו/);
+assert.match(calEvents[Object.keys(calEvents).pop()].title, /שיחת אפיון והתאמה: זיו/);
 g = ok({ action: 'crm_meeting_done', password: pw, id: z.id });
 assert.equal(g.person.meetingsDone, 0);
 assert.equal(g.person.stage, 'signed');
-assert.match(g.events[0].text, /התקיימה שיחת היכרות/);
+assert.match(g.events[0].text, /התקיימה שיחת אפיון והתאמה/);
 // the next one is meeting 1 of 4
 g = ok({ action: 'crm_meeting', password: pw, id: z.id, at: new Date(Date.now() + 5 * 86400000).toISOString() });
 assert.equal(g.person.nextMeetingKind, 'process');
@@ -223,6 +251,23 @@ ok({ action: 'submit', token: yt, consent: true, sections: [{ title: 'א', items
 g = ok({ action: 'crm_get', password: pw, id: y.id });
 assert.equal(g.person.stage, 'active');
 assert.equal(g.person.email, 'y@x.com');
+
+// 6d. amount "טרם נקבע" or left empty: the link is made, the card keeps 0
+const tb = ok({ action: 'crm_create', password: pw, name: 'טל', phone: '0526666666' });
+const tbo = ok({ action: 'crm_onboard', password: pw, id: tb.id, amount: 'tbd', gender: 'c' });
+assert.equal(tbo.person.amount, 0);
+assert.match(tbo.events[0].text, /הסכום טרם נקבע/);
+assert.equal(ok({ action: 'get', token: tbo.url.split('t=')[1] }).amount, 'tbd');
+assert.equal(vm.runInContext("amountText_('tbd')", ctx), 'טרם נקבע');
+const bl = ok({ action: 'crm_create', password: pw, name: 'גל', phone: '0525555555' });
+const blo = ok({ action: 'crm_onboard', password: pw, id: bl.id, amount: '', gender: 'f' });
+assert.equal(blo.person.amount, 0);
+assert.match(blo.events[0].text, /בלי סכום בחוזה/);
+assert.equal(ok({ action: 'get', token: blo.url.split('t=')[1] }).amount, '');
+assert.equal(vm.runInContext("amountText_('')", ctx), '');
+assert.equal(vm.runInContext('amountText_(2400)', ctx), '2,400 ₪');
+assert.equal(call({ action: 'crm_onboard', password: pw, id: bl.id, amount: -5, gender: 'f' }).error, 'invalid');
+assert.equal(call({ action: 'crm_onboard', password: pw, id: bl.id, amount: 'abc', gender: 'f' }).error, 'invalid');
 
 // 7. old admin.html link (no card) still lands in the CRM
 const old = ok({ action: 'create', password: pw, name: 'ישן', amount: 1000, gender: 'm' });

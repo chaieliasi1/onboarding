@@ -186,8 +186,8 @@ function auth_(pw) {
 
 function create_(req) {
   const name = clean_(req.name, 80);
-  const amount = Math.round(Number(req.amount));
-  if (!name || !(amount > 0) || amount > 1000000 || !GENDERS[req.gender]) throw new Error('invalid');
+  const amount = amount_(req.amount);
+  if (!name || amount === null || !GENDERS[req.gender]) throw new Error('invalid');
   const token = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '');
   withLock_(() => {
     const row = COLS.map(() => '');
@@ -211,7 +211,7 @@ function list_() {
     return {
       token: r.status === 'done' ? '' : String(r.token),
       name: String(r.name),
-      amount: Number(r.amount),
+      amount: amountOut_(r.amount),
       created: iso_(r.created),
       status: r.status,
       gender: gender_(r.gender),
@@ -229,7 +229,7 @@ function get_(token) {
   return Object.assign({
     status: r.status,
     name: String(r.name),
-    amount: Number(r.amount),
+    amount: amountOut_(r.amount),
     email: String(r.email || ''),
     phone: String(r.phone || ''),
     gender: gender_(r.gender)
@@ -305,7 +305,7 @@ function submit_(req) {
 
   const lines = [
     'שם: ' + esc_(r.name) + ' (' + GENDERS[gender_(r.gender)] + ')',
-    'סכום: ' + money_(r.amount),
+    'סכום: ' + (amountText_(r.amount) || 'ריק בחוזה'),
     'מייל: ' + esc_(r.email),
     'טלפון: ' + esc_(r.phone),
     'חתם: ' + fmt_(r.signedAt)
@@ -325,7 +325,7 @@ function submit_(req) {
     completedAt: new Date(), answers: JSON.stringify(sections).slice(0, 45000)
   });
   crmOnboardDone_(String(req.token), {
-    name: String(r.name), gender: gender_(r.gender), amount: Number(r.amount),
+    name: String(r.name), gender: gender_(r.gender), amount: Number(r.amount) || 0,
     email: String(r.email), phone: String(r.phone),
     contractUrl: fileUrl_(r.contractPdfId), questionnaireUrl: fileUrl_(qPdf.getId())
   });
@@ -354,7 +354,7 @@ function contractPdf_(c, sigBlob) {
     title_(body, CONTRACT_TITLE);
     para_(body, BRAND, { size: 10, color: '#5A5D69', after: 14 });
     para_(body, 'שם הלקוח: ' + c.name, { bold: true });
-    para_(body, 'התמורה עבור תהליך הליווי: ' + money_(c.amount), { bold: true, after: 12 });
+    para_(body, 'התמורה עבור תהליך הליווי: ' + amountText_(c.amount), { bold: true, after: 12 });
     t.clauses.forEach((x, i) => para_(body, (i + 1) + '. ' + x, { after: 8 }));
     para_(body, t.agree, { bold: true, before: 10, after: 8 });
 
@@ -513,6 +513,24 @@ function fmt_(d) {
 
 function money_(n) {
   return String(Math.round(Number(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' ₪';
+}
+
+// the agreed fee: a sum, 'tbd' (shown "טרם נקבע") or '' (left empty in the contract). null = invalid
+function amount_(v) {
+  if (v === 'tbd') return 'tbd';
+  if (v === '' || v === null || v === undefined) return '';
+  const n = Math.round(Number(v));
+  return n > 0 && n <= 1000000 ? n : null;
+}
+
+function amountOut_(v) {
+  const a = amount_(v);
+  return a === null ? '' : a;
+}
+
+function amountText_(v) {
+  const a = amountOut_(v);
+  return a === 'tbd' ? 'טרם נקבע' : a ? money_(a) : '';
 }
 
 function esc_(s) {

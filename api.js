@@ -80,8 +80,8 @@ window.ONBOARDING_API = 'https://script.google.com/macros/s/AKfycbylfirMmGbkhhPE
       case 'create': {
         needPw();
         const name = String(d.name || '').trim();
-        const amount = Math.round(Number(d.amount));
-        if (!name || !(amount > 0) || !['c', 'm', 'f'].includes(d.gender)) fail('invalid');
+        const amount = d.amount === 'tbd' || d.amount === '' || d.amount == null ? (d.amount || '') : Math.round(Number(d.amount));
+        if (!name || (typeof amount === 'number' && !(amount > 0)) || !['c', 'm', 'f'].includes(d.gender)) fail('invalid');
         const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), b => b.toString(16).padStart(2, '0')).join('');
         all[token] = { name, amount, created: new Date().toISOString(), status: 'sent', email: '', phone: '', gender: d.gender };
         save();
